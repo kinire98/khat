@@ -60,7 +60,6 @@ impl File {
     pub fn print_chars_reverse(&self) -> Result<()> {
         match self.content.as_deref() {
             Some(cont) => {
-                dbg!("here");
                 cont.split('\n').collect::<Vec<&str>>().iter().for_each(|line| {
                     println!("{}", line.chars().rev().collect::<String>());
                 });

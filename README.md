@@ -69,7 +69,7 @@ Another option is reversing the characters within the line
 khat -c Cargo.toml
 ```
 Output:
-```
+```bash
 ]egakcap[
 "tahk" = eman
 "0.1.0" = noisrev
@@ -87,4 +87,19 @@ lmth.tsefinam/ecnerefer/ograc/gro.gnal-tsur.cod//:sptth ta snoitinifed rieht dna
 As a final option you can combine both:
 ```bash
 khat -r Cargo.toml
+```
+Output:
+```bash
+}]"evired"[ = serutaef ,"01.4.4" = noisrev { = palc
+]seicnedneped[
+
+lmth.tsefinam/ecnerefer/ograc/gro.gnal-tsur.cod//:sptth ta snoitinifed rieht dna syek erom eeS #
+
+]"89erinik"[ = srohtua
+"ssel gnihton erom gnihton ,enolc tac A" = noitpircsed
+"TIM" = esnecil
+"1202" = noitide
+"0.1.0" = noisrev
+"tahk" = eman
+]egakcap[
 ```

@@ -1,8 +1,52 @@
+use std::error;
+use std::fmt::{Display, Debug};
 use std::fs;
-use clap::error::ErrorKind;
-pub type Result<T> = std::result::Result<T, clap::Error>;
+pub type Result<T> = std::result::Result<T, self::Error>;
 
 
+
+#[derive(Clone)]
+pub struct Error {
+    kind: ErrorKind,
+    error: String
+}
+#[derive(Clone)]
+pub enum ErrorKind {
+    PathNotSpecified,
+    FileNotFound,
+    EmptyContent,
+    MultipleFlags
+}
+
+impl Debug for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind {
+            ErrorKind::PathNotSpecified => write!(f, "khat error.\nThe path attribute is empty!\n{}", self.error),
+            ErrorKind::FileNotFound => write!(f, "khat error.\nDidn't found any file\n{}", self.error), 
+            ErrorKind::EmptyContent => write!(f, "khat error.\nYou didn't get the content from the file, invoque the `get_content()` method\n{}", self.error),
+            ErrorKind::MultipleFlags => write!(f, "khat error.\nCan't use more than one flag\n{}", self.error),
+        }
+    }
+}
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind {
+            ErrorKind::PathNotSpecified => write!(f, "The path attribute is empty!"),
+            ErrorKind::FileNotFound => write!(f, "Didn't found any file"), 
+            ErrorKind::EmptyContent => write!(f, "You didn't get the content from the file, invoque the `get_content()` method"),
+            ErrorKind::MultipleFlags => write!(f, "Can't use more than one flag"),
+        }
+    }
+}
+impl std::error::Error for Error {
+    fn cause(&self) -> Option<&dyn error::Error> {
+        Some(self)
+    }
+}
+
+
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct File {
     path: Option<String>,
     content: Option<String>
@@ -10,6 +54,18 @@ pub struct File {
 impl Default for File {
     fn default() -> Self {
         Self::new()
+    }
+}
+impl Display for File {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let file = self.clone();
+        if let Some(path) = file.path {
+            if let Some(content) = file.content {
+                return write!(f, "\nThe file {} has the following content:\n\n {}", path, content);
+            }
+            return write!(f, "\nThe file has the {} path, but has no content", path);
+        }
+        write!(f, "\nThe file has no path")
     }
 }
 impl File {
@@ -21,6 +77,9 @@ impl File {
     pub fn from_path(path: String) -> Self {
         File { path: Some(path), content: None }
     }
+    pub fn set_path(&mut self, path: String) {
+        self.path = Some(path);
+    }
     /// Gets the content from the specified file and introduces it as a String in the content attribute
     /// Returns a result in case the file name doesn't exist or the path attribute is empty
     pub fn get_content(&mut self) -> Result<()> {
@@ -30,10 +89,10 @@ impl File {
                         self.content = Some(content);
                         Ok(())
                     },
-                    Err(_) => Err(clap::Error::new(ErrorKind::InvalidValue))
+                    Err(_)=> Err(Error { kind: ErrorKind::FileNotFound, error: "Ensure you introduce a correct path. If you use Tab it can help you autocomplete the name of the file.".to_string() }),
                 }
             },
-            None => Err(clap::Error::new(ErrorKind::InvalidValue))
+            None => Err(Error { kind: ErrorKind::PathNotSpecified, error: "You must specify a path in order to get the content.\nUse the `set_path()` method or create with the `from_path()` method.".to_string()})
 
         }
         
@@ -44,7 +103,7 @@ impl File {
             Some(cont) => {
                 Ok(cont.to_string())
             },
-            None => Err(clap::Error::new(ErrorKind::InvalidValue))
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string()})
         }
     }
     /// Prints the content reversing both lines and characters
@@ -53,7 +112,7 @@ impl File {
             Some(cont) => { 
                 Ok(cont.chars().rev().collect::<String>())
             },
-            None => Err(clap::Error::new(ErrorKind::InvalidValue))
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
         }
     }
     /// Prints the content reversing only the lines
@@ -64,7 +123,7 @@ impl File {
                     *line
                 }).collect::<Vec<&str>>().join("\n"))
             },
-            None => Err(clap::Error::new(ErrorKind::InvalidValue))
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
         }
     }
     /// Prints the content reversing only the characters within the lines
@@ -75,11 +134,11 @@ impl File {
                     line.chars().rev().collect::<String>()
                 }).collect::<Vec<String>>().join("\n"))
             },
-            None => Err(clap::Error::new(ErrorKind::InvalidValue))
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
         }
     }
 }
-pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<String> {
+pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<File> {
     let mut file = File::from_path(args.0);
     file.get_content()?;
     let mut content_to_print = String::new();
@@ -88,10 +147,17 @@ pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<String> {
         (true, false, false) => content_to_print = file.print_reverse()?,
         (false, true, false) => content_to_print = file.print_lines_reverse()?,
         (false, false, true) => content_to_print = file.print_chars_reverse()?,
-        _ => Err(clap::Error::new(ErrorKind::InvalidSubcommand))?,
+        _ => Err(Error  { kind: ErrorKind::MultipleFlags, error: "Don't use multiple flags. It doesn't make sense.".to_string()})?,
     }
-    Ok(content_to_print)
+    println!("{}", content_to_print);
+    Ok(file)
 }
+
+
+
+
+
+
 
 #[cfg(test)]
 mod tests {

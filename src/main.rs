@@ -1,4 +1,4 @@
-use khat::{ Result, get_file_and_print };
+use khat::{ get_file_and_print, Result };
 use clap::Parser;
 
 #[derive(Parser)]
@@ -23,7 +23,7 @@ struct Args {
 
 fn main() -> Result<()>  {
     let args = Args::parse();
-    let content = get_file_and_print((args.file, args.full_rev, args.line_rev, args.chars_rev)).unwrap_or_else(|err| panic!("{}", err));
-    println!("{}", content);
+    let file = get_file_and_print((args.file, args.full_rev, args.line_rev, args.chars_rev))?;
+    println!("{}", file);
     Ok(())
 }

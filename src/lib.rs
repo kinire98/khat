@@ -119,9 +119,7 @@ impl File {
     pub fn print_lines_reverse(&self) -> Result<String> {
         match self.content.as_deref() {
             Some(cont) => {
-                Ok(cont.split('\n').collect::<Vec<&str>>().iter().rev().map(|line| {
-                    *line
-                }).collect::<Vec<&str>>().join("\n"))
+                Ok(cont.split('\n').collect::<Vec<&str>>().iter().rev().copied().collect::<Vec<&str>>().join("\n"))
             },
             None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
         }

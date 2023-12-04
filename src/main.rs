@@ -23,7 +23,6 @@ struct Args {
 
 fn main() -> Result<()>  {
     let args = Args::parse();
-    let file = get_file_and_print((args.file, args.full_rev, args.line_rev, args.chars_rev))?;
-    println!("{}", file);
+    get_file_and_print((args.file, args.full_rev, args.line_rev, args.chars_rev))?;
     Ok(())
 }

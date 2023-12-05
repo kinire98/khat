@@ -1,6 +1,7 @@
 use std::error;
 use std::fmt::{Display, Debug};
 use std::fs;
+use colored::Colorize;
 pub type Result<T> = std::result::Result<T, self::Error>;
 
 
@@ -21,10 +22,10 @@ pub enum ErrorKind {
 impl Debug for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
-            ErrorKind::PathNotSpecified => write!(f, "khat error.\nThe path attribute is empty!\n{}", self.error),
-            ErrorKind::FileNotFound => write!(f, "khat error.\nDidn't found any file\n{}", self.error), 
-            ErrorKind::EmptyContent => write!(f, "khat error.\nYou didn't get the content from the file, invoque the `get_content()` method\n{}", self.error),
-            ErrorKind::MultipleFlags => write!(f, "khat error.\nCan't use more than one flag\n{}", self.error),
+            ErrorKind::PathNotSpecified => write!(f, "\n{}\nThe path attribute is empty!\n{}", "Path not specified".red().bold(),self.error),
+            ErrorKind::FileNotFound => write!(f, "\n{}\nDidn't found any file\n{}", "File not found".red().bold(), self.error), 
+            ErrorKind::EmptyContent => write!(f, "\n{}\nYou didn't get the content from the file, invoque the `get_content()` method\n{}", "Empty content".red().bold(), self.error),
+            ErrorKind::MultipleFlags => write!(f, "\n{}\nCan't use more than one flag\n{}", "Multiple flags".red().bold(), self.error),
         }
     }
 }
@@ -61,9 +62,9 @@ impl Display for File {
         let file = self.clone();
         if let Some(path) = file.path {
             if let Some(content) = file.content {
-                return write!(f, "\nThe file {} has the following content:\n\n {}", path, content);
+                return write!(f, "\nThe file {} has the following content:\n\n {}", path.bold(), content);
             }
-            return write!(f, "\nThe file has the {} path, but has no content", path);
+            return write!(f, "\nThe file has the {} path, but has no content", path.bold());
         }
         write!(f, "\nThe file has no path")
     }
@@ -89,10 +90,10 @@ impl File {
                         self.content = Some(content);
                         Ok(())
                     },
-                    Err(_)=> Err(Error { kind: ErrorKind::FileNotFound, error: "Ensure you introduce a correct path. If you use Tab it can help you autocomplete the name of the file.".to_string() }),
+                    Err(_)=> Err(Error { kind: ErrorKind::FileNotFound, error: format!("Ensure you introduce a correct path.\n\n{} If you use Tab it can help you autocomplete the name of the file.\n", "Hint:".bold().black().on_bright_white()) }),
                 }
             },
-            None => Err(Error { kind: ErrorKind::PathNotSpecified, error: "You must specify a path in order to get the content.\nUse the `set_path()` method or create with the `from_path()` method.".to_string()})
+            None => Err(Error { kind: ErrorKind::PathNotSpecified, error: format!("You must specify a path in order to get the content.\n\n{} Use the `set_path()` method or create with the `from_path()` method.\n", "Hint:".bold().black().on_bright_white())})
 
         }
         
@@ -103,7 +104,7 @@ impl File {
             Some(cont) => {
                 Ok(cont.to_string())
             },
-            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string()})
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: format!("The file has no content.\n\n{} Execute the `get_content()` method first\n", "Hint:".bold().black().on_white())})
         }
     }
     /// Prints the content reversing both lines and characters
@@ -112,7 +113,7 @@ impl File {
             Some(cont) => { 
                 Ok(cont.chars().rev().collect::<String>())
             },
-            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: format!("The file has no content.\n\n{} Execute the `get_content()` method first\n", "Hint:".bold().black().on_white())})
         }
     }
     /// Prints the content reversing only the lines
@@ -121,7 +122,7 @@ impl File {
             Some(cont) => {
                 Ok(cont.split('\n').collect::<Vec<&str>>().iter().rev().copied().collect::<Vec<&str>>().join("\n"))
             },
-            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: format!("The file has no content.\n\n{} Execute the `get_content()` method first\n", "Hint:".bold().black().on_white())})
         }
     }
     /// Prints the content reversing only the characters within the lines
@@ -132,11 +133,11 @@ impl File {
                     line.chars().rev().collect::<String>()
                 }).collect::<Vec<String>>().join("\n"))
             },
-            None => Err(Error { kind: ErrorKind::EmptyContent, error: "The file has no content. Execute the `get_content()` method first.".to_string() })
+            None => Err(Error { kind: ErrorKind::EmptyContent, error: format!("The file has no content.\n\n{} Execute the `get_content()` method first\n", "Hint:".bold().black().on_white())})
         }
     }
 }
-pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<File> {
+pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<()> {
     let mut file = File::from_path(args.0);
     file.get_content()?;
     let mut content_to_print = String::new();
@@ -145,10 +146,10 @@ pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<File> {
         (true, false, false) => content_to_print = file.print_reverse()?,
         (false, true, false) => content_to_print = file.print_lines_reverse()?,
         (false, false, true) => content_to_print = file.print_chars_reverse()?,
-        _ => Err(Error  { kind: ErrorKind::MultipleFlags, error: "Don't use multiple flags. It doesn't make sense.".to_string()})?,
+        _ => Err(Error  { kind: ErrorKind::MultipleFlags, error: format!("\n\n{} Use a single flag\n", "Hint:".bold().black().on_white())})?,
     }
-    println!("{}", content_to_print);
-    Ok(file)
+    println!("\n{}\n", content_to_print);
+    Ok(())
 }
 
 

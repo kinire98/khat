@@ -26,3 +26,4 @@ fn main() -> Result<()>  {
     get_file_and_print((args.file, args.full_rev, args.line_rev, args.chars_rev))?;
     Ok(())
 }
+

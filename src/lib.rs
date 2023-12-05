@@ -148,7 +148,7 @@ pub fn get_file_and_print(args: (String, bool, bool, bool)) -> Result<()> {
         (false, false, true) => content_to_print = file.print_chars_reverse()?,
         _ => Err(Error  { kind: ErrorKind::MultipleFlags, error: format!("\n\n{} Use a single flag\n", "Hint:".bold().black().on_white())})?,
     }
-    println!("\n{}\n", content_to_print);
+    println!("{}", content_to_print);
     Ok(())
 }
 
